@@ -120,6 +120,13 @@
   gap: var(--space-4);
 }
 
+.editingLabel {
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+  margin: 0;
+}
+
 .field {
   display: grid;
   gap: var(--space-2);
@@ -129,6 +136,11 @@
   color: var(--color-text);
   font-size: var(--font-size-sm);
   font-weight: 700;
+}
+
+.optionalLabel {
+  color: var(--color-muted);
+  font-weight: 500;
 }
 
 .input,

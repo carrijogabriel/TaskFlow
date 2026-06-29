@@ -19,6 +19,11 @@
   font-weight: 700;
 }
 
+.optionalLabel {
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
 .input,
 .textarea {
   background: var(--color-surface);

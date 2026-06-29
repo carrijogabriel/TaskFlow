@@ -37,7 +37,7 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={styles.form} noValidate onSubmit={handleSubmit}>
       <div className={styles.field}>
         <label className={styles.label} htmlFor="task-title">
           Título
@@ -67,7 +67,7 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="task-description">
-          Descrição
+          Descrição <span className={styles.optionalLabel}>(opcional)</span>
         </label>
         <textarea
           className={styles.textarea}

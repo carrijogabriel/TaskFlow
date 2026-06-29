@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { TaskInput } from "../../hooks/useTasks";
 import type { Task } from "../../types/task";
 import styles from "./TaskItem.module.css";
@@ -29,6 +29,13 @@ export const TaskItem = ({
   const [draftTitle, setDraftTitle] = useState(task.title);
   const [draftDescription, setDraftDescription] = useState(task.description ?? "");
   const [titleError, setTitleError] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      titleInputRef.current?.focus();
+    }
+  }, [isEditing]);
 
   const startEditing = () => {
     setDraftTitle(task.title);
@@ -79,7 +86,14 @@ export const TaskItem = ({
   if (isEditing) {
     return (
       <article className={styles.item}>
-        <form className={styles.editForm} onSubmit={handleSave}>
+        <form
+          aria-label={`Editar tarefa ${task.title}`}
+          className={styles.editForm}
+          noValidate
+          onSubmit={handleSave}
+        >
+          <p className={styles.editingLabel}>Editando tarefa</p>
+
           <div className={styles.field}>
             <label className={styles.label} htmlFor={`edit-title-${task.id}`}>
               Título
@@ -95,6 +109,7 @@ export const TaskItem = ({
                   setTitleError("");
                 }
               }}
+              ref={titleInputRef}
               required
               type="text"
               value={draftTitle}
@@ -108,7 +123,7 @@ export const TaskItem = ({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor={`edit-description-${task.id}`}>
-              Descrição
+              Descrição <span className={styles.optionalLabel}>(opcional)</span>
             </label>
             <textarea
               className={styles.textarea}

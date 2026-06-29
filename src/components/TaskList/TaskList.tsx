@@ -33,7 +33,12 @@ export const TaskList = ({
         <h2 className={styles.title} id={sectionId}>
           {title}
         </h2>
-        <span className={styles.count}>{tasks.length}</span>
+        <span
+          aria-label={`${tasks.length} tarefa${tasks.length === 1 ? "" : "s"} em ${title.toLowerCase()}`}
+          className={styles.count}
+        >
+          {tasks.length}
+        </span>
       </header>
 
       {tasks.length > 0 ? (
