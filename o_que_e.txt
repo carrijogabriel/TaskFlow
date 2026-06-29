@@ -1,0 +1,7 @@
+Crie uma aplicação web de
+gerenciamento de tarefas. O usuário
+deve conseguir adicionar, editar,
+concluir e excluir tarefas. A
+interface deve exibir uma lista
+organizada de tarefas pendentes e
+concluídas
