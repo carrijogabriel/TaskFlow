@@ -16,6 +16,7 @@ O projeto sera desenvolvido com uma abordagem de Spec Driven Development. Antes 
 - [project-overview.md](./project-overview.md): contexto, escopo inicial e limites do projeto.
 - [tech-stack.md](./tech-stack.md): stack tecnica recomendada e justificativa.
 - [architecture.md](./architecture.md): arquitetura inicial proposta e separacao de responsabilidades.
+- [scaffold-spec.md](./scaffold-spec.md): especificacao do scaffold inicial com Vite antes da execucao tecnica.
 - [setup.md](./setup.md): comandos planejados de instalacao, desenvolvimento, build, lint e testes.
 - [project-structure.md](./project-structure.md): estrutura inicial de pastas proposta.
 - [development-workflow.md](./development-workflow.md): fluxo de trabalho com Spec Driven Development.
