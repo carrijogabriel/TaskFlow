@@ -6,7 +6,7 @@ Organizar a evolucao do TaskFlow em etapas pequenas, documentadas e revisaveis.
 
 ## Etapa 1: Documentacao e especificacoes
 
-Status: em andamento nesta entrega.
+Status: documentada.
 
 Objetivo:
 
@@ -19,15 +19,20 @@ Objetivo:
 Objetivo:
 
 - Escolher tecnologia inicial.
-- Criar estrutura base da aplicacao.
+- Documentar estrutura base da aplicacao.
 - Documentar comandos para rodar o projeto.
 - Evitar dependencias desnecessarias.
 
 Criterios de aceitacao:
 
-- Projeto inicia localmente.
+- Stack tecnica esta definida ou recomendada.
 - Estrutura de pastas esta documentada.
-- Nenhuma funcionalidade de tarefa e implementada sem especificacao da etapa.
+- Comandos principais estao documentados.
+- Nenhuma funcionalidade de tarefa e implementada.
+
+Observacao:
+
+- A inicializacao tecnica do projeto com Vite deve ocorrer em uma etapa futura, apos especificacao do comando, arquivos esperados, dependencias e riscos.
 
 ## Etapa 3: Interface basica
 

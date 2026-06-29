@@ -14,6 +14,11 @@ O projeto sera desenvolvido com uma abordagem de Spec Driven Development. Antes 
 ## Arquivos principais
 
 - [project-overview.md](./project-overview.md): contexto, escopo inicial e limites do projeto.
+- [tech-stack.md](./tech-stack.md): stack tecnica recomendada e justificativa.
+- [architecture.md](./architecture.md): arquitetura inicial proposta e separacao de responsabilidades.
+- [setup.md](./setup.md): comandos planejados de instalacao, desenvolvimento, build, lint e testes.
+- [project-structure.md](./project-structure.md): estrutura inicial de pastas proposta.
+- [development-workflow.md](./development-workflow.md): fluxo de trabalho com Spec Driven Development.
 - [specs/product-spec.md](./specs/product-spec.md): especificacao de produto, jornadas e criterios gerais.
 - [specs/frontend-spec.md](./specs/frontend-spec.md): especificacao preliminar da interface.
 - [specs/backend-spec.md](./specs/backend-spec.md): regras e responsabilidades esperadas para backend ou camada equivalente.
@@ -35,4 +40,4 @@ O projeto sera desenvolvido com uma abordagem de Spec Driven Development. Antes 
 
 ## Status atual
 
-Esta etapa cria apenas a base documental do projeto. Nao ha implementacao de telas, componentes, rotas, banco de dados, API ou logica de negocio.
+Esta documentacao define a base de produto e a proposta tecnica inicial do projeto. Ainda nao ha implementacao de telas, componentes, rotas, banco de dados, API ou logica de negocio.

@@ -69,4 +69,4 @@ Caso o projeto inclua autenticacao, banco de dados, usuarios reais ou API public
 - Entradas invalidas sao recusadas com mensagem clara.
 - Nao existem segredos no codigo.
 - A exclusao possui protecao contra acidente.
-- Erros nao expõem detalhes internos.
+- Erros nao expoem detalhes internos.
