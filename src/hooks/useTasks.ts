@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { loadTasks, saveTasks } from "../services/taskStorage";
 import type { Task } from "../types/task";
 
 export type TaskInput = {
@@ -29,7 +30,17 @@ const createTaskId = (): string => {
 };
 
 export const useTasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(loadTasks);
+  const hasLoadedStoredTasks = useRef(false);
+
+  useEffect(() => {
+    if (!hasLoadedStoredTasks.current) {
+      hasLoadedStoredTasks.current = true;
+      return;
+    }
+
+    saveTasks(tasks);
+  }, [tasks]);
 
   const pendingTasks = useMemo(
     () => tasks.filter((task) => !task.isCompleted),

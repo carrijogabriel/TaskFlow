@@ -5,9 +5,9 @@ import { App } from "./App";
 
 const renderTaskFlow = () => {
   const user = userEvent.setup();
-  render(<App />);
+  const renderResult = render(<App />);
 
-  return { user };
+  return { user, ...renderResult };
 };
 
 const getPendingSection = () =>
@@ -159,5 +159,49 @@ describe("App", () => {
     expect(window.confirm).toHaveBeenCalledWith('Excluir a tarefa "Manter tarefa"?');
     expect(screen.getByText("Manter tarefa")).toBeInTheDocument();
     expect(screen.getByLabelText("1 tarefa em tarefas pendentes")).toBeInTheDocument();
+  });
+
+  it("mantem tarefa pendente apos remontar a aplicacao", async () => {
+    const { user, unmount } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Persistir tarefa", "Continua apos remontar");
+    unmount();
+
+    renderTaskFlow();
+
+    expect(within(getPendingSection()).getByText("Persistir tarefa")).toBeInTheDocument();
+    expect(within(getPendingSection()).getByText("Continua apos remontar")).toBeInTheDocument();
+    expect(screen.getByLabelText("1 tarefa em tarefas pendentes")).toBeInTheDocument();
+    expect(screen.getByLabelText("0 tarefas em tarefas concluídas")).toBeInTheDocument();
+  });
+
+  it("mantem tarefa concluida na secao correta apos remontar", async () => {
+    const { user, unmount } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Persistir concluida");
+    await user.click(screen.getByRole("button", { name: "Concluir" }));
+    unmount();
+
+    renderTaskFlow();
+
+    expect(within(getPendingSection()).queryByText("Persistir concluida")).not.toBeInTheDocument();
+    expect(within(getCompletedSection()).getByText("Persistir concluida")).toBeInTheDocument();
+    expect(screen.getByLabelText("0 tarefas em tarefas pendentes")).toBeInTheDocument();
+    expect(screen.getByLabelText("1 tarefa em tarefas concluídas")).toBeInTheDocument();
+  });
+
+  it("mantem exclusao apos remontar a aplicacao", async () => {
+    const { user, unmount } = renderTaskFlow();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    await createTaskFromForm(user, "Excluir e persistir");
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+    unmount();
+
+    renderTaskFlow();
+
+    expect(screen.queryByText("Excluir e persistir")).not.toBeInTheDocument();
+    expect(screen.getByText("Sem tarefas pendentes")).toBeInTheDocument();
+    expect(screen.getByLabelText("0 tarefas em tarefas pendentes")).toBeInTheDocument();
   });
 });
