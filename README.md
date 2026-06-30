@@ -33,6 +33,11 @@ O MVP inicial já possui as principais funcionalidades de gerenciamento de taref
 - Edição de tarefas.
 - Conclusão e reabertura de tarefas.
 - Exclusão com confirmação.
+- Busca por título ou descrição.
+- Filtros por todas, pendentes e concluídas.
+- Prioridade e prazo opcional por tarefa.
+- Indicação de tarefas pendentes atrasadas.
+- Ordenação automática das listas de tarefas.
 - Persistência local com `localStorage`.
 - Testes automatizados para regras do hook e fluxos principais da interface.
 
@@ -83,8 +88,5 @@ A documentação técnica e decisões iniciais do projeto estão disponíveis em
 
 ## Próximos passos
 
-- Melhorias pontuais de UX.
-- Refinamento visual da interface.
 - Ampliação da cobertura de testes.
-- Filtros ou busca de tarefas.
 - Possível backend futuramente.
