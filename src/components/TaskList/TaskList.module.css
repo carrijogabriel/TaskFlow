@@ -10,7 +10,26 @@
   display: flex;
   gap: var(--space-3);
   justify-content: space-between;
-  padding-bottom: var(--space-3);
+  padding: 0 0 var(--space-3);
+  position: relative;
+}
+
+.header::before {
+  border-radius: var(--radius-pill);
+  bottom: -1px;
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  width: 5rem;
+}
+
+.pending .header::before {
+  background: var(--color-warning);
+}
+
+.completed .header::before {
+  background: var(--color-success);
 }
 
 .title {
@@ -33,9 +52,19 @@
   padding: 0 var(--space-2);
 }
 
+.pending .count {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.completed .count {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
 .list {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
   list-style: none;
   margin: 0;
   padding: 0;

@@ -14,6 +14,7 @@ type TaskListProps = {
   sectionId: string;
   tasks: Task[];
   title: string;
+  variant: "completed" | "pending";
 };
 
 export const TaskList = ({
@@ -26,9 +27,15 @@ export const TaskList = ({
   sectionId,
   tasks,
   title,
+  variant,
 }: TaskListProps) => {
   return (
-    <section aria-labelledby={sectionId} className={styles.section}>
+    <section
+      aria-labelledby={sectionId}
+      className={`${styles.section} ${
+        variant === "completed" ? styles.completed : styles.pending
+      }`}
+    >
       <header className={styles.header}>
         <h2 className={styles.title} id={sectionId}>
           {title}

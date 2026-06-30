@@ -85,7 +85,7 @@ export const TaskItem = ({
 
   if (isEditing) {
     return (
-      <article className={styles.item}>
+      <article className={`${styles.item} ${styles.editing}`}>
         <form
           aria-label={`Editar tarefa ${task.title}`}
           className={styles.editForm}
@@ -115,7 +115,7 @@ export const TaskItem = ({
               value={draftTitle}
             />
             {titleError ? (
-              <p className={styles.error} id={`edit-title-error-${task.id}`}>
+              <p className={styles.error} id={`edit-title-error-${task.id}`} role="alert">
                 {titleError}
               </p>
             ) : null}

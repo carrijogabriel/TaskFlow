@@ -21,6 +21,8 @@ const getCreateTitleInput = () => screen.getByRole("textbox", { name: "Título" 
 const getCreateDescriptionInput = () =>
   screen.getByRole("textbox", { name: /descrição/i });
 
+const getSearchInput = () => screen.getByRole("searchbox", { name: "Buscar tarefas" });
+
 const createTaskFromForm = async (
   user: ReturnType<typeof userEvent.setup>,
   title: string,
@@ -45,6 +47,11 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(getCreateTitleInput()).toBeInTheDocument();
     expect(getCreateDescriptionInput()).toBeInTheDocument();
+    expect(getSearchInput()).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Todas" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     expect(getPendingSection()).toBeInTheDocument();
     expect(getCompletedSection()).toBeInTheDocument();
     expect(screen.getByText("Sem tarefas pendentes")).toBeInTheDocument();
@@ -203,5 +210,101 @@ describe("App", () => {
     expect(screen.queryByText("Excluir e persistir")).not.toBeInTheDocument();
     expect(screen.getByText("Sem tarefas pendentes")).toBeInTheDocument();
     expect(screen.getByLabelText("0 tarefas em tarefas pendentes")).toBeInTheDocument();
+  });
+
+  it("filtro Todas mostra tarefas pendentes e concluidas", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Tarefa concluida no filtro");
+    await user.click(screen.getByRole("button", { name: "Concluir" }));
+    await createTaskFromForm(user, "Tarefa pendente no filtro");
+    await user.click(screen.getByRole("button", { name: "Todas" }));
+
+    expect(within(getPendingSection()).getByText("Tarefa pendente no filtro")).toBeInTheDocument();
+    expect(within(getCompletedSection()).getByText("Tarefa concluida no filtro")).toBeInTheDocument();
+  });
+
+  it("filtro Pendentes mostra apenas tarefas pendentes", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Tarefa concluida escondida");
+    await user.click(screen.getByRole("button", { name: "Concluir" }));
+    await createTaskFromForm(user, "Tarefa pendente visivel");
+    await user.click(screen.getByRole("button", { name: "Pendentes" }));
+
+    expect(screen.getByRole("button", { name: "Pendentes" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(getPendingSection()).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Tarefas concluídas" })).not.toBeInTheDocument();
+    expect(screen.getByText("Tarefa pendente visivel")).toBeInTheDocument();
+    expect(screen.queryByText("Tarefa concluida escondida")).not.toBeInTheDocument();
+  });
+
+  it("filtro Concluídas mostra apenas tarefas concluidas", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Tarefa concluida visivel");
+    await user.click(screen.getByRole("button", { name: "Concluir" }));
+    await createTaskFromForm(user, "Tarefa pendente escondida");
+    await user.click(screen.getByRole("button", { name: "Concluídas" }));
+
+    expect(screen.getByRole("button", { name: "Concluídas" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.queryByRole("region", { name: "Tarefas pendentes" })).not.toBeInTheDocument();
+    expect(getCompletedSection()).toBeInTheDocument();
+    expect(screen.getByText("Tarefa concluida visivel")).toBeInTheDocument();
+    expect(screen.queryByText("Tarefa pendente escondida")).not.toBeInTheDocument();
+  });
+
+  it("busca tarefas pelo titulo sem diferenciar maiusculas", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Estudar React");
+    await createTaskFromForm(user, "Revisar CSS");
+    await user.type(getSearchInput(), "  estudar  ");
+
+    expect(screen.getByText("Estudar React")).toBeInTheDocument();
+    expect(screen.queryByText("Revisar CSS")).not.toBeInTheDocument();
+  });
+
+  it("busca tarefas pela descricao", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Revisar tela", "Ajustar detalhes de UX");
+    await createTaskFromForm(user, "Atualizar README", "Documentacao do projeto");
+    await user.type(getSearchInput(), "ux");
+
+    expect(screen.getByText("Revisar tela")).toBeInTheDocument();
+    expect(screen.queryByText("Atualizar README")).not.toBeInTheDocument();
+  });
+
+  it("mostra estado vazio quando a busca nao encontra tarefas", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Tarefa existente");
+    await user.type(getSearchInput(), "sem resultado");
+
+    expect(screen.queryByText("Tarefa existente")).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText("Nenhuma tarefa encontrada com os filtros atuais."),
+    ).not.toHaveLength(0);
+  });
+
+  it("combina filtro e busca ao mesmo tempo", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Estudar React");
+    await user.click(screen.getByRole("button", { name: "Concluir" }));
+    await createTaskFromForm(user, "Estudar CSS");
+    await user.click(screen.getByRole("button", { name: "Pendentes" }));
+    await user.type(getSearchInput(), "css");
+
+    expect(screen.getByText("Estudar CSS")).toBeInTheDocument();
+    expect(screen.queryByText("Estudar React")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("1 tarefa em tarefas pendentes")).toBeInTheDocument();
   });
 });

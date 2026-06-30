@@ -1,0 +1,125 @@
+.filters {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.heading {
+  align-items: start;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.heading h2 {
+  color: var(--color-text);
+  font-size: var(--font-size-xl);
+  margin: 0;
+}
+
+.heading p {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.controls {
+  align-items: end;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.searchField {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.label {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.searchInput {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font: inherit;
+  min-height: 2.75rem;
+  min-width: 0;
+  padding: 0 var(--space-3);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 100%;
+}
+
+.searchInput:hover {
+  border-color: var(--color-muted);
+}
+
+.searchInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  outline: none;
+}
+
+.filterGroup {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.filterButton {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-muted);
+  flex: 1 1 auto;
+  min-height: 2.35rem;
+  padding: 0.5rem 0.8rem;
+}
+
+.filterButton:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.activeFilter,
+.activeFilter:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+@media (min-width: 760px) {
+  .controls {
+    grid-template-columns: minmax(16rem, 1fr) auto;
+  }
+
+  .filterButton {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .filters {
+    padding: var(--space-4);
+  }
+
+  .heading {
+    display: grid;
+  }
+
+  .heading p {
+    white-space: normal;
+  }
+}

@@ -59,7 +59,7 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
           value={title}
         />
         {titleError ? (
-          <p className={styles.error} id="task-title-error">
+          <p className={styles.error} id="task-title-error" role="alert">
             {titleError}
           </p>
         ) : null}
