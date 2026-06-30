@@ -68,6 +68,14 @@ Inicie o servidor de desenvolvimento:
 npm run dev
 ```
 
+Com o servidor em execução, acesse a aplicação localmente no navegador:
+
+```bash
+http://localhost:5173
+```
+
+Esse endereço é apenas para uso local e só funcionará na máquina onde o projeto estiver sendo executado.
+
 Execute o build de produção:
 
 ```bash
