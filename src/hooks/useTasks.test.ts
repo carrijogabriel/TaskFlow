@@ -12,6 +12,8 @@ const createStoredTask = (overrides: Partial<Task> = {}): Task => ({
   id: "stored-task-1",
   title: "Tarefa salva",
   description: "Descricao salva",
+  priority: "medium",
+  dueDate: null,
   isCompleted: false,
   createdAt: "2026-06-29T15:00:00.000Z",
   updatedAt: "2026-06-29T15:00:00.000Z",
@@ -37,6 +39,8 @@ describe("useTasks", () => {
       createStoredTask({
         id: "stored-task-2",
         title: "Tarefa concluida salva",
+        priority: "high",
+        dueDate: "2026-07-20",
         isCompleted: true,
         completedAt: "2026-06-29T16:00:00.000Z",
       }),
@@ -48,6 +52,30 @@ describe("useTasks", () => {
     expect(result.current.tasks).toEqual(storedTasks);
     expect(result.current.pendingTasks).toHaveLength(1);
     expect(result.current.completedTasks).toHaveLength(1);
+  });
+
+  it("normaliza tarefas antigas sem prioridade e prazo", () => {
+    const legacyStoredTask = {
+      id: "legacy-task-1",
+      title: "Tarefa antiga",
+      description: "Salva antes dos novos campos",
+      isCompleted: false,
+      createdAt: "2026-06-29T15:00:00.000Z",
+      updatedAt: "2026-06-29T15:00:00.000Z",
+      completedAt: null,
+    };
+    window.localStorage.setItem(
+      TASKS_STORAGE_KEY,
+      JSON.stringify([legacyStoredTask]),
+    );
+
+    const { result } = renderHook(() => useTasks());
+
+    expect(result.current.tasks[0]).toEqual({
+      ...legacyStoredTask,
+      priority: "medium",
+      dueDate: null,
+    });
   });
 
   it("inicia vazio quando o localStorage tem JSON corrompido", () => {
@@ -94,6 +122,8 @@ describe("useTasks", () => {
       expect.objectContaining({
         title: "Revisar MVP",
         description: "Cobrir regras principais",
+        priority: "medium",
+        dueDate: null,
         isCompleted: false,
         createdAt: "2026-06-29T15:00:00.000Z",
         updatedAt: "2026-06-29T15:00:00.000Z",
@@ -102,6 +132,32 @@ describe("useTasks", () => {
     );
     expect(task?.id).toEqual(expect.any(String));
     expect(readStoredTasks()).toEqual(result.current.tasks);
+  });
+
+  it("cria tarefa com prioridade e prazo informados", () => {
+    const { result } = renderHook(() => useTasks());
+
+    act(() => {
+      result.current.createTask({
+        title: "Planejar entrega",
+        priority: "high",
+        dueDate: "2026-07-20",
+      });
+    });
+
+    expect(result.current.tasks[0]).toEqual(
+      expect.objectContaining({
+        title: "Planejar entrega",
+        priority: "high",
+        dueDate: "2026-07-20",
+      }),
+    );
+    expect(readStoredTasks()[0]).toEqual(
+      expect.objectContaining({
+        priority: "high",
+        dueDate: "2026-07-20",
+      }),
+    );
   });
 
   it("permite criar tarefa sem descricao", () => {
@@ -115,6 +171,8 @@ describe("useTasks", () => {
       expect.objectContaining({
         title: "Tarefa sem descricao",
         description: undefined,
+        priority: "medium",
+        dueDate: null,
       }),
     );
     expect(readStoredTasks()[0]).toEqual(
@@ -234,6 +292,8 @@ describe("useTasks", () => {
       wasUpdated = result.current.updateTask(taskId, {
         title: "  Titulo editado  ",
         description: "  Descricao editada  ",
+        priority: "low",
+        dueDate: "2026-07-01",
       });
     });
 
@@ -242,6 +302,8 @@ describe("useTasks", () => {
       expect.objectContaining({
         title: "Titulo editado",
         description: "Descricao editada",
+        priority: "low",
+        dueDate: "2026-07-01",
         updatedAt: "2026-06-29T18:00:00.000Z",
       }),
     );
@@ -249,7 +311,42 @@ describe("useTasks", () => {
       expect.objectContaining({
         title: "Titulo editado",
         description: "Descricao editada",
+        priority: "low",
+        dueDate: "2026-07-01",
         updatedAt: "2026-06-29T18:00:00.000Z",
+      }),
+    );
+  });
+
+  it("salva prazo vazio como null ao editar", () => {
+    const { result } = renderHook(() => useTasks());
+
+    act(() => {
+      result.current.createTask({
+        title: "Tarefa com prazo",
+        dueDate: "2026-07-20",
+      });
+    });
+
+    const taskId = result.current.tasks[0]?.id ?? "";
+
+    act(() => {
+      result.current.updateTask(taskId, {
+        title: "Tarefa sem prazo",
+        dueDate: "",
+      });
+    });
+
+    expect(result.current.tasks[0]).toEqual(
+      expect.objectContaining({
+        title: "Tarefa sem prazo",
+        dueDate: null,
+      }),
+    );
+    expect(readStoredTasks()[0]).toEqual(
+      expect.objectContaining({
+        title: "Tarefa sem prazo",
+        dueDate: null,
       }),
     );
   });

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import type { TaskInput } from "../../hooks/useTasks";
+import type { TaskPriority } from "../../types/task";
 import styles from "./TaskForm.module.css";
 
 type TaskFormProps = {
@@ -9,6 +10,8 @@ type TaskFormProps = {
 export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [dueDate, setDueDate] = useState("");
   const [titleError, setTitleError] = useState("");
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -24,6 +27,8 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
     const wasCreated = onCreateTask({
       title: normalizedTitle,
       description,
+      priority,
+      dueDate,
     });
 
     if (!wasCreated) {
@@ -33,6 +38,8 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
 
     setTitle("");
     setDescription("");
+    setPriority("medium");
+    setDueDate("");
     setTitleError("");
   };
 
@@ -77,6 +84,37 @@ export const TaskForm = ({ onCreateTask }: TaskFormProps) => {
           rows={4}
           value={description}
         />
+      </div>
+
+      <div className={styles.fieldGrid}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="task-priority">
+            Prioridade
+          </label>
+          <select
+            className={styles.select}
+            id="task-priority"
+            onChange={(event) => setPriority(event.target.value as TaskPriority)}
+            value={priority}
+          >
+            <option value="low">Baixa</option>
+            <option value="medium">Média</option>
+            <option value="high">Alta</option>
+          </select>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="task-due-date">
+            Prazo <span className={styles.optionalLabel}>(opcional)</span>
+          </label>
+          <input
+            className={styles.input}
+            id="task-due-date"
+            onChange={(event) => setDueDate(event.target.value)}
+            type="date"
+            value={dueDate}
+          />
+        </div>
       </div>
 
       <button className={styles.submitButton} type="submit">

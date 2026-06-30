@@ -1,4 +1,4 @@
-import type { Task } from "../types/task";
+import type { Task, TaskPriority } from "../types/task";
 
 export const TASKS_STORAGE_KEY = "taskflow.tasks";
 
@@ -14,22 +14,52 @@ const getLocalStorage = (): Storage | null => {
   }
 };
 
-const isTask = (value: unknown): value is Task => {
+const isTaskPriority = (value: unknown): value is TaskPriority =>
+  value === "low" || value === "medium" || value === "high";
+
+const normalizeStoredTask = (value: unknown): Task | null => {
   if (!value || typeof value !== "object") {
-    return false;
+    return null;
   }
 
   const task = value as Partial<Record<keyof Task, unknown>>;
 
-  return (
-    typeof task.id === "string" &&
-    typeof task.title === "string" &&
-    (task.description === undefined || typeof task.description === "string") &&
-    typeof task.isCompleted === "boolean" &&
-    typeof task.createdAt === "string" &&
-    typeof task.updatedAt === "string" &&
-    (task.completedAt === null || typeof task.completedAt === "string")
-  );
+  const {
+    completedAt,
+    createdAt,
+    description,
+    dueDate,
+    id,
+    isCompleted,
+    priority,
+    title,
+    updatedAt,
+  } = task;
+
+  const hasRequiredBaseFields =
+    typeof id === "string" &&
+    typeof title === "string" &&
+    (description === undefined || typeof description === "string") &&
+    typeof isCompleted === "boolean" &&
+    typeof createdAt === "string" &&
+    typeof updatedAt === "string" &&
+    (completedAt === null || typeof completedAt === "string");
+
+  if (!hasRequiredBaseFields) {
+    return null;
+  }
+
+  return {
+    id,
+    title,
+    description,
+    priority: isTaskPriority(priority) ? priority : "medium",
+    dueDate: typeof dueDate === "string" ? dueDate : null,
+    isCompleted,
+    createdAt,
+    updatedAt,
+    completedAt,
+  };
 };
 
 export const loadTasks = (): Task[] => {
@@ -48,11 +78,23 @@ export const loadTasks = (): Task[] => {
 
     const parsedValue: unknown = JSON.parse(storedValue);
 
-    if (!Array.isArray(parsedValue) || !parsedValue.every(isTask)) {
+    if (!Array.isArray(parsedValue)) {
       return [];
     }
 
-    return parsedValue;
+    const tasks: Task[] = [];
+
+    for (const value of parsedValue) {
+      const task = normalizeStoredTask(value);
+
+      if (!task) {
+        return [];
+      }
+
+      tasks.push(task);
+    }
+
+    return tasks;
   } catch {
     return [];
   }

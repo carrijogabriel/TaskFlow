@@ -2,6 +2,31 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
+import { TASKS_STORAGE_KEY } from "./services/taskStorage";
+import type { Task, TaskPriority } from "./types/task";
+
+type CreateTaskOptions = {
+  description?: string;
+  dueDate?: string;
+  priority?: TaskPriority;
+};
+
+const createStoredTask = (overrides: Partial<Task> = {}): Task => ({
+  id: "stored-task-1",
+  title: "Tarefa salva",
+  description: "Descricao salva",
+  priority: "medium",
+  dueDate: null,
+  isCompleted: false,
+  createdAt: "2026-06-29T15:00:00.000Z",
+  updatedAt: "2026-06-29T15:00:00.000Z",
+  completedAt: null,
+  ...overrides,
+});
+
+const seedStoredTasks = (tasks: Task[]) => {
+  window.localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+};
 
 const renderTaskFlow = () => {
   const user = userEvent.setup();
@@ -21,17 +46,35 @@ const getCreateTitleInput = () => screen.getByRole("textbox", { name: "Título" 
 const getCreateDescriptionInput = () =>
   screen.getByRole("textbox", { name: /descrição/i });
 
+const getCreatePrioritySelect = () =>
+  screen.getByRole("combobox", { name: "Prioridade" });
+
+const getCreateDueDateInput = () => screen.getByLabelText(/prazo/i);
+
 const getSearchInput = () => screen.getByRole("searchbox", { name: "Buscar tarefas" });
 
 const createTaskFromForm = async (
   user: ReturnType<typeof userEvent.setup>,
   title: string,
-  description?: string,
+  descriptionOrOptions?: string | CreateTaskOptions,
 ) => {
+  const options =
+    typeof descriptionOrOptions === "string"
+      ? { description: descriptionOrOptions }
+      : (descriptionOrOptions ?? {});
+
   await user.type(getCreateTitleInput(), title);
 
-  if (description) {
-    await user.type(getCreateDescriptionInput(), description);
+  if (options.description) {
+    await user.type(getCreateDescriptionInput(), options.description);
+  }
+
+  if (options.priority) {
+    await user.selectOptions(getCreatePrioritySelect(), options.priority);
+  }
+
+  if (options.dueDate) {
+    await user.type(getCreateDueDateInput(), options.dueDate);
   }
 
   await user.click(screen.getByRole("button", { name: "Criar tarefa" }));
@@ -47,6 +90,8 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(getCreateTitleInput()).toBeInTheDocument();
     expect(getCreateDescriptionInput()).toBeInTheDocument();
+    expect(getCreatePrioritySelect()).toHaveValue("medium");
+    expect(getCreateDueDateInput()).toHaveValue("");
     expect(getSearchInput()).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Todas" })).toHaveAttribute(
       "aria-pressed",
@@ -71,10 +116,28 @@ describe("App", () => {
 
     expect(within(getPendingSection()).getByText("Revisar planejamento")).toBeInTheDocument();
     expect(within(getPendingSection()).getByText("Validar tarefas principais")).toBeInTheDocument();
+    expect(within(getPendingSection()).getByText("Prioridade: Média")).toBeInTheDocument();
     expect(screen.getByLabelText("1 tarefa em tarefas pendentes")).toBeInTheDocument();
     expect(screen.getByLabelText("0 tarefas em tarefas concluídas")).toBeInTheDocument();
     expect(getCreateTitleInput()).toHaveValue("");
     expect(getCreateDescriptionInput()).toHaveValue("");
+    expect(getCreatePrioritySelect()).toHaveValue("medium");
+    expect(getCreateDueDateInput()).toHaveValue("");
+  });
+
+  it("cria tarefa com prioridade e prazo pela interface", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Entregar planejamento", {
+      dueDate: "2026-07-20",
+      priority: "high",
+    });
+
+    expect(within(getPendingSection()).getByText("Entregar planejamento")).toBeInTheDocument();
+    expect(within(getPendingSection()).getByText("Prioridade: Alta")).toBeInTheDocument();
+    expect(within(getPendingSection()).getByText("Prazo: 20/07/2026")).toBeInTheDocument();
+    expect(getCreatePrioritySelect()).toHaveValue("medium");
+    expect(getCreateDueDateInput()).toHaveValue("");
   });
 
   it("bloqueia criacao com titulo vazio ou apenas espacos", async () => {
@@ -135,12 +198,36 @@ describe("App", () => {
       within(editForm).getByRole("textbox", { name: /descrição/i }),
       "Descricao editada",
     );
+    await user.selectOptions(
+      within(editForm).getByRole("combobox", { name: "Prioridade" }),
+      "low",
+    );
+    await user.type(within(editForm).getByLabelText(/prazo/i), "2026-07-01");
     await user.click(within(editForm).getByRole("button", { name: "Salvar" }));
 
     expect(screen.getByText("Titulo editado")).toBeInTheDocument();
     expect(screen.getByText("Descricao editada")).toBeInTheDocument();
+    expect(screen.getByText("Prioridade: Baixa")).toBeInTheDocument();
+    expect(screen.getByText("Prazo: 01/07/2026")).toBeInTheDocument();
     expect(screen.queryByText("Titulo original")).not.toBeInTheDocument();
     expect(screen.queryByText("Descricao original")).not.toBeInTheDocument();
+  });
+
+  it("remove prazo ao salvar edicao com campo de data vazio", async () => {
+    const { user } = renderTaskFlow();
+
+    await createTaskFromForm(user, "Tarefa com prazo", { dueDate: "2026-07-20" });
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+
+    const editForm = screen.getByRole("form", {
+      name: "Editar tarefa Tarefa com prazo",
+    });
+
+    await user.clear(within(editForm).getByLabelText(/prazo/i));
+    await user.click(within(editForm).getByRole("button", { name: "Salvar" }));
+
+    expect(screen.getByText("Tarefa com prazo")).toBeInTheDocument();
+    expect(screen.queryByText("Prazo: 20/07/2026")).not.toBeInTheDocument();
   });
 
   it("exclui tarefa quando a confirmacao retorna true", async () => {
@@ -210,6 +297,42 @@ describe("App", () => {
     expect(screen.queryByText("Excluir e persistir")).not.toBeInTheDocument();
     expect(screen.getByText("Sem tarefas pendentes")).toBeInTheDocument();
     expect(screen.getByLabelText("0 tarefas em tarefas pendentes")).toBeInTheDocument();
+  });
+
+  it("mostra indicador de atraso para tarefa pendente vencida", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-30T12:00:00.000Z"));
+    seedStoredTasks([
+      createStoredTask({
+        dueDate: "2026-06-29",
+        title: "Enviar relatorio atrasado",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(screen.getByText("Enviar relatorio atrasado")).toBeInTheDocument();
+    expect(screen.getByText("Prazo: 29/06/2026")).toBeInTheDocument();
+    expect(screen.getByText("Atrasada")).toBeInTheDocument();
+  });
+
+  it("nao mostra indicador de atraso para tarefa concluida vencida", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-30T12:00:00.000Z"));
+    seedStoredTasks([
+      createStoredTask({
+        completedAt: "2026-06-29T16:00:00.000Z",
+        dueDate: "2026-06-29",
+        isCompleted: true,
+        title: "Relatorio concluido vencido",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(screen.getByText("Relatorio concluido vencido")).toBeInTheDocument();
+    expect(screen.getByText("Prazo: 29/06/2026")).toBeInTheDocument();
+    expect(screen.queryByText("Atrasada")).not.toBeInTheDocument();
   });
 
   it("filtro Todas mostra tarefas pendentes e concluidas", async () => {

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadTasks, saveTasks } from "../services/taskStorage";
-import type { Task } from "../types/task";
+import type { Task, TaskPriority } from "../types/task";
 
 export type TaskInput = {
   title: string;
   description?: string;
+  priority?: TaskPriority;
+  dueDate?: string | null;
 };
 
 const normalizeTaskInput = ({ title, description }: TaskInput): TaskInput | null => {
@@ -19,6 +21,23 @@ const normalizeTaskInput = ({ title, description }: TaskInput): TaskInput | null
     title: normalizedTitle,
     description: normalizedDescription || undefined,
   };
+};
+
+const normalizeOptionalDate = (dueDate?: string | null): string | null => {
+  const normalizedDate = dueDate?.trim();
+
+  return normalizedDate || null;
+};
+
+const getNextDueDate = (
+  currentDueDate: string | null,
+  nextDueDate?: string | null,
+): string | null => {
+  if (nextDueDate === undefined) {
+    return currentDueDate;
+  }
+
+  return normalizeOptionalDate(nextDueDate);
 };
 
 const createTaskId = (): string => {
@@ -64,6 +83,8 @@ export const useTasks = () => {
       id: createTaskId(),
       title: normalizedInput.title,
       description: normalizedInput.description,
+      priority: input.priority ?? "medium",
+      dueDate: normalizeOptionalDate(input.dueDate),
       isCompleted: false,
       createdAt: now,
       updatedAt: now,
@@ -90,6 +111,8 @@ export const useTasks = () => {
               ...task,
               title: normalizedInput.title,
               description: normalizedInput.description,
+              priority: input.priority ?? task.priority,
+              dueDate: getNextDueDate(task.dueDate, input.dueDate),
               updatedAt: now,
             }
           : task,

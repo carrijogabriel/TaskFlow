@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { TaskInput } from "../../hooks/useTasks";
-import type { Task } from "../../types/task";
+import type { Task, TaskPriority } from "../../types/task";
 import styles from "./TaskItem.module.css";
 
 type TaskItemProps = {
@@ -18,6 +18,30 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
 
 const formatDate = (value: string): string => dateFormatter.format(new Date(value));
 
+const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: "Baixa",
+  medium: "Média",
+  high: "Alta",
+};
+
+const formatDueDate = (value: string): string => {
+  const [year, month, day] = value.split("-");
+
+  return `${day}/${month}/${year}`;
+};
+
+const getTodayDateString = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const isOverdue = (task: Task): boolean =>
+  !task.isCompleted && task.dueDate !== null && task.dueDate < getTodayDateString();
+
 export const TaskItem = ({
   task,
   onCompleteTask,
@@ -28,6 +52,8 @@ export const TaskItem = ({
   const [isEditing, setIsEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(task.title);
   const [draftDescription, setDraftDescription] = useState(task.description ?? "");
+  const [draftPriority, setDraftPriority] = useState<TaskPriority>(task.priority);
+  const [draftDueDate, setDraftDueDate] = useState(task.dueDate ?? "");
   const [titleError, setTitleError] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,6 +66,8 @@ export const TaskItem = ({
   const startEditing = () => {
     setDraftTitle(task.title);
     setDraftDescription(task.description ?? "");
+    setDraftPriority(task.priority);
+    setDraftDueDate(task.dueDate ?? "");
     setTitleError("");
     setIsEditing(true);
   };
@@ -47,6 +75,8 @@ export const TaskItem = ({
   const cancelEditing = () => {
     setDraftTitle(task.title);
     setDraftDescription(task.description ?? "");
+    setDraftPriority(task.priority);
+    setDraftDueDate(task.dueDate ?? "");
     setTitleError("");
     setIsEditing(false);
   };
@@ -64,6 +94,8 @@ export const TaskItem = ({
     const wasUpdated = onUpdateTask(task.id, {
       title: normalizedTitle,
       description: draftDescription,
+      priority: draftPriority,
+      dueDate: draftDueDate,
     });
 
     if (!wasUpdated) {
@@ -82,6 +114,8 @@ export const TaskItem = ({
       onDeleteTask(task.id);
     }
   };
+
+  const taskIsOverdue = isOverdue(task);
 
   if (isEditing) {
     return (
@@ -134,6 +168,39 @@ export const TaskItem = ({
             />
           </div>
 
+          <div className={styles.fieldGrid}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={`edit-priority-${task.id}`}>
+                Prioridade
+              </label>
+              <select
+                className={styles.select}
+                id={`edit-priority-${task.id}`}
+                onChange={(event) =>
+                  setDraftPriority(event.target.value as TaskPriority)
+                }
+                value={draftPriority}
+              >
+                <option value="low">Baixa</option>
+                <option value="medium">Média</option>
+                <option value="high">Alta</option>
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={`edit-due-date-${task.id}`}>
+                Prazo <span className={styles.optionalLabel}>(opcional)</span>
+              </label>
+              <input
+                className={styles.input}
+                id={`edit-due-date-${task.id}`}
+                onChange={(event) => setDraftDueDate(event.target.value)}
+                type="date"
+                value={draftDueDate}
+              />
+            </div>
+          </div>
+
           <div className={styles.actions}>
             <button type="submit">Salvar</button>
             <button className={styles.secondaryButton} onClick={cancelEditing} type="button">
@@ -157,6 +224,18 @@ export const TaskItem = ({
           >
             {task.isCompleted ? "Concluída" : "Pendente"}
           </span>
+        </div>
+
+        <div className={styles.badges} aria-label="Detalhes da tarefa">
+          <span className={`${styles.badge} ${styles[`priority-${task.priority}`]}`}>
+            Prioridade: {PRIORITY_LABELS[task.priority]}
+          </span>
+          {task.dueDate ? (
+            <span className={styles.badge}>Prazo: {formatDueDate(task.dueDate)}</span>
+          ) : null}
+          {taskIsOverdue ? (
+            <span className={`${styles.badge} ${styles.overdue}`}>Atrasada</span>
+          ) : null}
         </div>
 
         {task.description ? (
