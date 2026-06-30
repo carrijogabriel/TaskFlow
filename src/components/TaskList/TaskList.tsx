@@ -1,5 +1,6 @@
 import type { TaskInput } from "../../hooks/useTasks";
 import type { Task } from "../../types/task";
+import { sortCompletedTasks, sortPendingTasks } from "../../utils/taskSorting";
 import { EmptyState } from "../EmptyState/EmptyState";
 import { TaskItem } from "../TaskItem/TaskItem";
 import styles from "./TaskList.module.css";
@@ -29,6 +30,9 @@ export const TaskList = ({
   title,
   variant,
 }: TaskListProps) => {
+  const orderedTasks =
+    variant === "completed" ? sortCompletedTasks(tasks) : sortPendingTasks(tasks);
+
   return (
     <section
       aria-labelledby={sectionId}
@@ -50,7 +54,7 @@ export const TaskList = ({
 
       {tasks.length > 0 ? (
         <ul className={styles.list}>
-          {tasks.map((task) => (
+          {orderedTasks.map((task) => (
             <li className={styles.listItem} key={task.id}>
               <TaskItem
                 onCompleteTask={onCompleteTask}

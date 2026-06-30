@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { TaskInput } from "../../hooks/useTasks";
 import type { Task, TaskPriority } from "../../types/task";
+import { formatDueDate, isTaskOverdue } from "../../utils/taskDates";
 import styles from "./TaskItem.module.css";
 
 type TaskItemProps = {
@@ -23,24 +24,6 @@ const PRIORITY_LABELS: Record<TaskPriority, string> = {
   medium: "Média",
   high: "Alta",
 };
-
-const formatDueDate = (value: string): string => {
-  const [year, month, day] = value.split("-");
-
-  return `${day}/${month}/${year}`;
-};
-
-const getTodayDateString = (): string => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
-const isOverdue = (task: Task): boolean =>
-  !task.isCompleted && task.dueDate !== null && task.dueDate < getTodayDateString();
 
 export const TaskItem = ({
   task,
@@ -115,7 +98,7 @@ export const TaskItem = ({
     }
   };
 
-  const taskIsOverdue = isOverdue(task);
+  const taskIsOverdue = isTaskOverdue(task);
 
   if (isEditing) {
     return (
@@ -227,11 +210,15 @@ export const TaskItem = ({
         </div>
 
         <div className={styles.badges} aria-label="Detalhes da tarefa">
-          <span className={`${styles.badge} ${styles[`priority-${task.priority}`]}`}>
+          <span
+            className={`${styles.badge} ${styles.priorityBadge} ${styles[`priority-${task.priority}`]}`}
+          >
             Prioridade: {PRIORITY_LABELS[task.priority]}
           </span>
           {task.dueDate ? (
-            <span className={styles.badge}>Prazo: {formatDueDate(task.dueDate)}</span>
+            <span className={`${styles.badge} ${styles.dueDateBadge}`}>
+              Prazo: {formatDueDate(task.dueDate)}
+            </span>
           ) : null}
           {taskIsOverdue ? (
             <span className={`${styles.badge} ${styles.overdue}`}>Atrasada</span>

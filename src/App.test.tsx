@@ -41,6 +41,11 @@ const getPendingSection = () =>
 const getCompletedSection = () =>
   screen.getByRole("region", { name: "Tarefas concluídas" });
 
+const getTaskTitlesInSection = (section: HTMLElement) =>
+  within(section)
+    .getAllByRole("heading", { level: 3 })
+    .map((heading) => heading.textContent);
+
 const getCreateTitleInput = () => screen.getByRole("textbox", { name: "Título" });
 
 const getCreateDescriptionInput = () =>
@@ -138,6 +143,32 @@ describe("App", () => {
     expect(within(getPendingSection()).getByText("Prazo: 20/07/2026")).toBeInTheDocument();
     expect(getCreatePrioritySelect()).toHaveValue("medium");
     expect(getCreateDueDateInput()).toHaveValue("");
+  });
+
+  it("mostra badges de prioridade baixa, média e alta com texto claro", () => {
+    seedStoredTasks([
+      createStoredTask({
+        id: "low-priority-task",
+        priority: "low",
+        title: "Tarefa de baixa prioridade",
+      }),
+      createStoredTask({
+        id: "medium-priority-task",
+        priority: "medium",
+        title: "Tarefa de média prioridade",
+      }),
+      createStoredTask({
+        id: "high-priority-task",
+        priority: "high",
+        title: "Tarefa de alta prioridade",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(screen.getByText("Prioridade: Baixa")).toBeInTheDocument();
+    expect(screen.getByText("Prioridade: Média")).toBeInTheDocument();
+    expect(screen.getByText("Prioridade: Alta")).toBeInTheDocument();
   });
 
   it("bloqueia criacao com titulo vazio ou apenas espacos", async () => {
@@ -333,6 +364,157 @@ describe("App", () => {
     expect(screen.getByText("Relatorio concluido vencido")).toBeInTheDocument();
     expect(screen.getByText("Prazo: 29/06/2026")).toBeInTheDocument();
     expect(screen.queryByText("Atrasada")).not.toBeInTheDocument();
+  });
+
+  it("ordena tarefas pendentes com atrasadas antes das nao atrasadas", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-30T12:00:00.000Z"));
+    seedStoredTasks([
+      createStoredTask({
+        createdAt: "2026-06-29T10:00:00.000Z",
+        dueDate: "2026-07-01",
+        id: "future-high-priority-task",
+        priority: "high",
+        title: "Alta prioridade futura",
+      }),
+      createStoredTask({
+        createdAt: "2026-06-29T11:00:00.000Z",
+        dueDate: "2026-06-29",
+        id: "overdue-low-priority-task",
+        priority: "low",
+        title: "Baixa prioridade atrasada",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(getTaskTitlesInSection(getPendingSection())).toEqual([
+      "Baixa prioridade atrasada",
+      "Alta prioridade futura",
+    ]);
+  });
+
+  it("ordena tarefas pendentes por prioridade depois da regra de atraso", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-30T12:00:00.000Z"));
+    seedStoredTasks([
+      createStoredTask({
+        createdAt: "2026-06-29T10:00:00.000Z",
+        id: "low-priority-order-task",
+        priority: "low",
+        title: "Prioridade baixa",
+      }),
+      createStoredTask({
+        createdAt: "2026-06-29T11:00:00.000Z",
+        id: "high-priority-order-task",
+        priority: "high",
+        title: "Prioridade alta",
+      }),
+      createStoredTask({
+        createdAt: "2026-06-29T12:00:00.000Z",
+        id: "medium-priority-order-task",
+        priority: "medium",
+        title: "Prioridade média",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(getTaskTitlesInSection(getPendingSection())).toEqual([
+      "Prioridade alta",
+      "Prioridade média",
+      "Prioridade baixa",
+    ]);
+  });
+
+  it("ordena tarefas pendentes por prazo mais proximo quando a prioridade empata", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-30T12:00:00.000Z"));
+    seedStoredTasks([
+      createStoredTask({
+        createdAt: "2026-06-29T10:00:00.000Z",
+        dueDate: "2026-07-20",
+        id: "far-due-date-task",
+        priority: "medium",
+        title: "Prazo mais distante",
+      }),
+      createStoredTask({
+        createdAt: "2026-06-29T11:00:00.000Z",
+        dueDate: "2026-07-01",
+        id: "near-due-date-task",
+        priority: "medium",
+        title: "Prazo mais próximo",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(getTaskTitlesInSection(getPendingSection())).toEqual([
+      "Prazo mais próximo",
+      "Prazo mais distante",
+    ]);
+  });
+
+  it("ordena tarefas pendentes sem prazo depois das tarefas com prazo equivalente", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-30T12:00:00.000Z"));
+    seedStoredTasks([
+      createStoredTask({
+        createdAt: "2026-06-29T10:00:00.000Z",
+        dueDate: null,
+        id: "without-due-date-task",
+        priority: "medium",
+        title: "Sem prazo",
+      }),
+      createStoredTask({
+        createdAt: "2026-06-29T11:00:00.000Z",
+        dueDate: "2026-07-20",
+        id: "with-due-date-task",
+        priority: "medium",
+        title: "Com prazo",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(getTaskTitlesInSection(getPendingSection())).toEqual([
+      "Com prazo",
+      "Sem prazo",
+    ]);
+  });
+
+  it("ordena tarefas concluidas pelas conclusoes mais recentes primeiro", () => {
+    seedStoredTasks([
+      createStoredTask({
+        completedAt: "2026-06-29T16:00:00.000Z",
+        id: "older-completed-task",
+        isCompleted: true,
+        title: "Concluída antiga",
+        updatedAt: "2026-06-29T16:00:00.000Z",
+      }),
+      createStoredTask({
+        completedAt: "2026-06-30T10:00:00.000Z",
+        id: "newer-completed-task",
+        isCompleted: true,
+        title: "Concluída mais recente",
+        updatedAt: "2026-06-30T10:00:00.000Z",
+      }),
+      createStoredTask({
+        completedAt: null,
+        id: "fallback-completed-task",
+        isCompleted: true,
+        title: "Concluída sem data de conclusão",
+        updatedAt: "2026-06-30T09:00:00.000Z",
+      }),
+    ]);
+
+    render(<App />);
+
+    expect(getTaskTitlesInSection(getCompletedSection())).toEqual([
+      "Concluída mais recente",
+      "Concluída sem data de conclusão",
+      "Concluída antiga",
+    ]);
   });
 
   it("filtro Todas mostra tarefas pendentes e concluidas", async () => {
